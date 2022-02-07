@@ -120,7 +120,7 @@ def final_print(guess_wd, soln):
                     wordle_str = wordle_str + color.YELLOW + box_str
             else:
                 wordle_str = wordle_str + color.GREY + box_str
-    print(wordle_str + color.RESET)
+    print(wordle_str + color.RESET + '\n')
     wordle_str = ''
 
 # checks if word is in valid word dictionary, and matches the word length defined
