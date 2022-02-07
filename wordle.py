@@ -32,11 +32,13 @@ class color:
 def clear():
     _ = os.system('cls')
 
+# get the letter index ie, a->0, b->1, y->24, z->25
 def get_letter_idx(letter):
     for i in range(len(wordle_word_dict.valid_char_list)):
         if letter == wordle_word_dict.valid_char_list[i]:
             return i
 
+# print the above keyboard with information on each letter
 def print_keyboard():
     for kb_line in keyboard_str:
         keyboard_str_updated = ''
@@ -61,21 +63,28 @@ def print_keyboard():
                 keyboard_str_updated = keyboard_str_updated + kb_line[i]
         print(keyboard_str_updated + color.RESET)
 
+# update the keyboard information based on the last guess and previous information
 def update_keyboard(guess_wd, soln):
     for i in range(len(guess_wd)):
         letter_idx = get_letter_idx(guess_wd[i])
         if soln.find(guess_wd[i]) != -1:
+
+            # update to green status if correct letter and place is true
             if soln[i] == guess_wd[i]:
                 wordle_word_dict.keyboard_status[letter_idx] = '2'
 
+            # update to yellow status only if it's not already green
             else:
                 if wordle_word_dict.keyboard_status[letter_idx] == '2':
                     wordle_word_dict.keyboard_status[letter_idx] = '2'
                 else:
                     wordle_word_dict.keyboard_status[letter_idx] = '1'
+
+        # if letter is nowhere in the word, change to grey status
         else:
             wordle_word_dict.keyboard_status[letter_idx] = '3'
 
+# print the color-coded guesses with characters
 def wordle_print(guess_wd, soln):
     wordle_str = ''
     if debug_mode:
@@ -94,6 +103,7 @@ def wordle_print(guess_wd, soln):
     print(wordle_str + color.RESET)
     wordle_str = ''
 
+# print the color-coded guesses with boxes
 def final_print(guess_wd, soln):
     wordle_str = ''
     if debug_mode:
@@ -113,6 +123,8 @@ def final_print(guess_wd, soln):
     print(wordle_str + color.RESET)
     wordle_str = ''
 
+# checks if word is in valid word dictionary, and matches the word length defined
+# also updates updates the keyboard status once a valid word is found
 def get_valid_word(guess_num, soln):
 
     while(1):
@@ -126,6 +138,7 @@ def get_valid_word(guess_num, soln):
     update_keyboard(in_str, soln)
     return in_str
 
+# handles all printing until end-of-game print
 def pre_guess_print(guess_num, soln):
     clear()
     if guess_num != 0:
@@ -133,10 +146,12 @@ def pre_guess_print(guess_num, soln):
         for i in range(guess_num):
             wordle_print(guess_str[i], soln)
 
+# end-of-game print handled here
 def post_game_rpt(soln):
     for i in range(num_guesses):
         final_print(guess_str[i], soln)
 
+# general function for the game to be running
 def playing_fcn(soln):
     victory = 0
     for i in range(num_guesses):
@@ -157,6 +172,8 @@ def playing_fcn(soln):
 
 
 def main():
+    
+    # takes the specified list below and prints them in alphabetical order, ready to copy into wordle_word_dict.py
     if alphabetize_mode:
         with open("wordle_list_alpha.txt", 'w') as output_file:
             wordle_word_dict.valid_word_list.sort()
@@ -164,6 +181,7 @@ def main():
                 output_file.write("\t\'" + wordle_word_dict.valid_word_list[i] + '\',\n')
         output_file.close()
 
+    # the game will be played in either debug mode or normal mode
     else:
         if debug_mode:
             soln = debug_word
