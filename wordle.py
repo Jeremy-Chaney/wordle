@@ -30,7 +30,7 @@ class color:
 
 # define our clear function
 def clear():
-    _ = os.system('cls')
+    _ = os.system('clear')
 
 # get the letter index ie, a->0, b->1, y->24, z->25
 def get_letter_idx(letter):
