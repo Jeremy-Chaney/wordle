@@ -2,7 +2,8 @@ from platform import java_ver
 from re import I
 from this import d
 
-
+# list of possible answers in alphabetical order
+# these are also in the valid_word_list, but are all more common words
 valid_answer_list = [
 	'aback',
 	'abase',
@@ -2321,6 +2322,7 @@ valid_answer_list = [
 	'zonal'
 ]
 
+# list of all possible input words
 valid_word_list = [
     'aahed',
 	'aalii',
@@ -15296,8 +15298,10 @@ valid_word_list = [
 	'zymic'
 ]
 
+# list of all lower-case letters used to check for keyboard updates
 all_letters = 'abcdefghijklmnopqrstuvwxyz'
 
+# used to find the index of each letter
 valid_char_list = [
     'a',
     'b',
@@ -15327,6 +15331,11 @@ valid_char_list = [
     'z'
 ]
 
+# stores the status of each letter
+# 0 -> white  -> no status
+# 1 -> yellow -> correct letter but in the wrong spot
+# 2 -> green  -> correct letter in correct spot
+# 3 -> grey   -> letter does not appear in the final word
 keyboard_status = [
     '0', #a
     '0', #b
