@@ -19,14 +19,13 @@ keyboard_str = [
 ]
 
 class color:
-    GREY    = "\033[90m"
-    RED     = "\033[91m"
-    GREEN   = "\033[92m"
-    YELLOW  = "\033[93m"
-    BLUE    = "\033[94m"
-    PINK    = "\033[95m"
-    WHITE   = "\033[97m"
-    RESET   = "\033[0;0m"
+    GREY        = "\033[38;5;246m"
+    GREEN       = "\033[38;5;10m"
+    YELLOW      = "\033[38;5;220m"
+    RESET       = "\033[0;0m"
+    GREEN_BG    = "\033[48;5;10m\033[38;5;232m" # bold black text on green background
+    YELLOW_BG   = "\033[48;5;220m\033[38;5;232m" # bold black text on yellow background
+    GREY_BG     = "\033[48;5;246m\033[38;5;232m" # bold black text on grey/white background
 
 # define our clear function
 def clear():
@@ -115,12 +114,12 @@ def final_print(guess_wd, soln):
         if guess_wd[i] != '\n':
             if soln.find(guess_wd[i]) != -1:
                 if soln[i] == guess_wd[i]:
-                    wordle_str = wordle_str + color.GREEN + box_str
+                    wordle_str = wordle_str + " " + color.GREEN_BG + " " + guess_wd[i] + " " + color.RESET
                 else:
-                    wordle_str = wordle_str + color.YELLOW + box_str
+                    wordle_str = wordle_str + " " + color.YELLOW_BG + " " + guess_wd[i] + " " + color.RESET
             else:
-                wordle_str = wordle_str + color.GREY + box_str
-    print(wordle_str + color.RESET + '\n')
+                wordle_str = wordle_str + " " + color.GREY_BG + " " + guess_wd[i] + " " + color.RESET
+    print(wordle_str + '\n')
     wordle_str = ''
 
 # checks if word is in valid word dictionary, and matches the word length defined
@@ -172,7 +171,7 @@ def playing_fcn(soln):
 
 
 def main():
-    
+
     # takes the specified list below and prints them in alphabetical order, ready to copy into wordle_word_dict.py
     if alphabetize_mode:
         with open("wordle_list_alpha.txt", 'w') as output_file:
