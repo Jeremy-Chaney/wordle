@@ -22,6 +22,7 @@ class color:
     GREY        = "\033[38;5;246m"
     GREEN       = "\033[38;5;10m"
     YELLOW      = "\033[38;5;220m"
+    WHITE       = "\033[38;5;255m"
     RESET       = "\033[0;0m"
     GREEN_BG    = "\033[48;5;10m\033[38;5;232m" # bold black text on green background
     YELLOW_BG   = "\033[48;5;220m\033[38;5;232m" # bold black text on yellow background
