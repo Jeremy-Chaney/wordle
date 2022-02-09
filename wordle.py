@@ -24,13 +24,17 @@ class color:
     YELLOW      = "\033[38;5;220m"
     WHITE       = "\033[38;5;255m"
     RESET       = "\033[0;0m"
-    GREEN_BG    = "\033[48;5;10m\033[38;5;232m" # bold black text on green background
+    GREEN_BG    = "\033[48;5;10m\033[38;5;232m"  # bold black text on green background
     YELLOW_BG   = "\033[48;5;220m\033[38;5;232m" # bold black text on yellow background
-    GREY_BG     = "\033[48;5;246m\033[38;5;232m" # bold black text on grey/white background
+    GREY_BG     = "\033[48;5;246m\033[38;5;232m" # bold black text on grey background
+    RED_BG      = "\033[48;5;196m\033[38;5;232m"   # bold white text on red background
 
 # define our clear function
 def clear():
-    _ = os.system('cls')
+    if sys.platform == 'win32':
+        _ = os.system('cls')
+    else:
+        _ = os.system('clear')
 
 # get the letter index ie, a->0, b->1, y->24, z->25
 def get_letter_idx(letter):
@@ -95,12 +99,12 @@ def wordle_print(guess_wd, soln):
         if guess_wd[i] != '\n':
             if soln.find(guess_wd[i]) != -1:
                 if soln[i] == guess_wd[i]:
-                    wordle_str = wordle_str + color.GREEN + guess_wd[i]
+                    wordle_str = wordle_str + " " + color.GREEN_BG + " " + guess_wd[i] + " " + color.RESET
                 else:
-                    wordle_str = wordle_str + color.YELLOW + guess_wd[i]
+                    wordle_str = wordle_str + " " + color.YELLOW_BG + " " + guess_wd[i] + " " + color.RESET
             else:
-                wordle_str = wordle_str + color.GREY + guess_wd[i]
-    print(wordle_str + color.RESET)
+                wordle_str = wordle_str + " " + color.GREY_BG + " " + guess_wd[i] + " " + color.RESET
+    print(wordle_str + color.RESET + '\n')
     wordle_str = ''
 
 # print the color-coded guesses with boxes
@@ -126,7 +130,7 @@ def final_print(guess_wd, soln):
 # checks if word is in valid word dictionary, and matches the word length defined
 # also updates updates the keyboard status once a valid word is found
 def get_valid_word(guess_num, soln):
-
+    ascii_trig = 0
     while(1):
         pre_guess_print(guess_num, soln)
         print_keyboard()
@@ -135,8 +139,11 @@ def get_valid_word(guess_num, soln):
             if in_str in wordle_word_dict.valid_word_list:
                 break
 
+            if in_str == 'ascii':
+                ascii_trig = 1
+
     update_keyboard(in_str, soln)
-    return in_str
+    return in_str, ascii_trig
 
 # handles all printing until end-of-game print
 def pre_guess_print(guess_num, soln):
@@ -151,24 +158,69 @@ def post_game_rpt(soln):
     for i in range(num_guesses):
         final_print(guess_str[i], soln)
 
+def ascii_fail_rpt(soln):
+    i = 0
+    for line in wordle_word_dict.ascii_fail:
+        if line.find("xxx") == -1:
+            print(line)
+        else:
+            print(line[0: line.find("xxx")] + color.RED_BG + " " + soln[i] + " " + color.RESET + line[line.find("xxx") + 3: len(line)])
+            i = i + 1
+
+def ascii_pass_rpt(soln):
+    i = 0
+    for line in wordle_word_dict.ascii_pass:
+        if line.find("xxx") == -1:
+            print(line)
+        elif i == 0:
+            print(line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[2] + " " + color.RESET + line[line.find("xxx") + 3: len(line)])
+            i = i + 1
+        elif i == 1:
+            print(line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[3] + " " + color.RESET + line[line.find("xxx") + 3: len(line)])
+            i = i + 1
+        elif i == 2:
+            print(line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[1] + " " + color.RESET + line[line.find("xxx") + 3: len(line)])
+            i = i + 1
+        elif i == 3:
+            print(line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[0] + " " + color.RESET + line[line.find("xxx") + 3: len(line)])
+            i = i + 1
+        elif i == 4:
+            print(line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[4] + " " + color.RESET + line[line.find("xxx") + 3: len(line)])
+            i = i + 1
+
 # general function for the game to be running
 def playing_fcn(soln):
     victory = 0
+    ascii_mode = 0
     for i in range(num_guesses):
 
-        guess_str[i] = get_valid_word(i, soln)
+        guess_str[i], ascii_trig = get_valid_word(i, soln)
         if guess_str[i] == soln:
             victory = i + 1
             break
+        if ascii_trig == 1:
+            if ascii_mode == 0:
+                ascii_mode = 1
+            else:
+                ascii_mode = 0
 
     clear()
-    if victory == 0:
-        print('wow... you are bad at this')
-        print('The word was ' + soln)
-    else:
-        print('YOU GOT IT!\n' + str(i + 1) + '/6')
 
-    post_game_rpt(soln)
+    if ascii_mode:
+        if victory == 0:
+            ascii_fail_rpt(soln)
+        else:
+            ascii_pass_rpt(soln)
+            print("\n\n" + str(i + 1) + '/6')
+
+    else:
+        if victory == 0:
+            print('wow... you are bad at this')
+            print('The word was ' + soln)
+        else:
+            print('YOU GOT IT!\n' + str(i + 1) + '/6')
+
+        post_game_rpt(soln)
 
 
 def main():
