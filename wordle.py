@@ -1,6 +1,9 @@
 import os
 import sys
 import random
+import time
+import math
+import signal
 from datetime import datetime
 import wordle_word_dict
 
@@ -131,6 +134,12 @@ def final_print(guess_wd, soln):
 # also updates updates the keyboard status once a valid word is found
 def get_valid_word(guess_num, soln):
     ascii_trig = 0
+
+    def handle_ctrl_c(signal, frame):
+        print(f"\n{color.GREEN}INFO{color.RESET} : user did CTRL+C exit after {guess_num} guesses, solution = {soln}")
+        exit()
+    signal.signal(signal.SIGINT, handle_ctrl_c)
+
     while(1):
         pre_guess_print(guess_num, soln)
         print_keyboard()
@@ -222,6 +231,8 @@ def playing_fcn(soln):
 
         post_game_rpt(soln)
 
+    return i
+
 
 def main():
 
@@ -235,6 +246,8 @@ def main():
 
     # the game will be played in either debug mode or normal mode
     else:
+        start_time = time.time()
+
         if debug_mode:
             soln = debug_word
         else:
@@ -242,7 +255,11 @@ def main():
             rnd_idx = random.randrange(0, len(wordle_word_dict.valid_answer_list))
             soln = wordle_word_dict.valid_answer_list[rnd_idx]
 
-        playing_fcn(soln)
+        num_guesses = playing_fcn(soln)
+
+        end_time = time.time()
+        print(f"SCORE : {math.floor(num_guesses * (end_time - start_time))}")
 
 if __name__ == '__main__':
     main()
+    end_time = time.time()
