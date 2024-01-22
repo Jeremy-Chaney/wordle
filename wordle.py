@@ -32,21 +32,27 @@ class color:
     GREY_BG     = "\033[48;5;246m\033[38;5;232m" # bold black text on grey background
     RED_BG      = "\033[48;5;196m\033[38;5;232m"   # bold white text on red background
 
-# define our clear function
 def clear():
+    """
+    define our clear function
+    """
     if sys.platform == 'win32':
         _ = os.system('cls')
     else:
         _ = os.system('clear')
 
-# get the letter index ie, a->0, b->1, y->24, z->25
 def get_letter_idx(letter):
+    """
+    get the letter index ie, a->0, b->1, y->24, z->25
+    """
     for i in range(len(wordle_word_dict.valid_char_list)):
         if letter == wordle_word_dict.valid_char_list[i]:
             return i
 
-# print the above keyboard with information on each letter
 def print_keyboard():
+    """
+    print the above keyboard with information on each letter
+    """
     for kb_line in keyboard_str:
         keyboard_str_updated = ''
         for i in range(len(kb_line)):
@@ -70,8 +76,10 @@ def print_keyboard():
                 keyboard_str_updated = keyboard_str_updated + kb_line[i]
         print(keyboard_str_updated + color.RESET)
 
-# update the keyboard information based on the last guess and previous information
 def update_keyboard(guess_wd, soln):
+    """
+    update the keyboard information based on the last guess and previous information
+    """
     for i in range(len(guess_wd)):
         letter_idx = get_letter_idx(guess_wd[i])
         if soln.find(guess_wd[i]) != -1:
@@ -91,8 +99,10 @@ def update_keyboard(guess_wd, soln):
         else:
             wordle_word_dict.keyboard_status[letter_idx] = '3'
 
-# print the color-coded guesses with characters
 def wordle_print(guess_wd, soln):
+    """
+    print the color-coded guesses with characters
+    """
     wordle_str = ''
     if debug_mode:
         print(guess_wd)
@@ -110,8 +120,10 @@ def wordle_print(guess_wd, soln):
     print(wordle_str + color.RESET + '\n')
     wordle_str = ''
 
-# print the color-coded guesses with boxes
 def final_print(guess_wd, soln):
+    """
+    print the color-coded guesses with boxes
+    """
     wordle_str = ''
     if debug_mode:
         print(guess_wd)
@@ -130,9 +142,12 @@ def final_print(guess_wd, soln):
     print(wordle_str + '\n')
     wordle_str = ''
 
-# checks if word is in valid word dictionary, and matches the word length defined
-# also updates updates the keyboard status once a valid word is found
 def get_valid_word(guess_num, soln):
+    """
+    checks if word is in valid word dictionary, and matches the word length defined
+
+    also updates updates the keyboard status once a valid word is found
+    """
     ascii_trig = 0
 
     def handle_ctrl_c(signal, frame):
@@ -154,20 +169,27 @@ def get_valid_word(guess_num, soln):
     update_keyboard(in_str, soln)
     return in_str, ascii_trig
 
-# handles all printing until end-of-game print
 def pre_guess_print(guess_num, soln):
+    """
+    handles all printing until end-of-game print
+    """
     clear()
     if guess_num != 0:
         print("Wrong, take another guess...\n")
         for i in range(guess_num):
             wordle_print(guess_str[i], soln)
 
-# end-of-game print handled here
 def post_game_rpt(soln):
+    """
+    end-of-game print handled here
+    """
     for i in range(num_guesses):
         final_print(guess_str[i], soln)
 
 def ascii_fail_rpt(soln):
+    """
+    easter egg fail print
+    """
     i = 0
     for line in wordle_word_dict.ascii_fail:
         if line.find("xxx") == -1:
@@ -177,6 +199,9 @@ def ascii_fail_rpt(soln):
             i = i + 1
 
 def ascii_pass_rpt(soln):
+    """
+    easter egg pass print
+    """
     i = 0
     for line in wordle_word_dict.ascii_pass:
         if line.find("xxx") == -1:
@@ -197,8 +222,10 @@ def ascii_pass_rpt(soln):
             print(line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[4] + " " + color.RESET + line[line.find("xxx") + 3: len(line)])
             i = i + 1
 
-# general function for the game to be running
 def playing_fcn(soln):
+    """
+    general function for the game to be running
+    """
     victory = 0
     ascii_mode = 0
     for i in range(num_guesses):
