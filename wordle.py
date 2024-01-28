@@ -4,13 +4,39 @@ import random
 import time
 import math
 import signal
+import argparse
 from datetime import datetime
 import wordle_word_dict
 
+class CustomHelpFormatter(
+    argparse.RawDescriptionHelpFormatter,
+    argparse.ArgumentDefaultsHelpFormatter,
+    argparse.MetavarTypeHelpFormatter):
+    pass
+
+help_text = """
+Python Wordle by Jeremy Chaney
+
+This is a python-based version of Wordle
+This version uses a seeded pseudo-random number generator
+to come up with a new word from over 2.3k possible words.
+Unlike the web-based version, the answer dictionary is stored
+in alphabetical order instead of a day-by-day list which is easy to cheat.
+
+If you want to make a version of this for yourself, I recommend using the word
+dictionaries from this wordle_word_dict.py
+
+### Rules of Wordle ###
+-   You must guess a 5 letter word in 6 or fewer guesses
+-   Your guesses must be a word in the dictionary of valid words (there are almost 13k valid words)
+-   You will get feedback after each valid guess:
+    1. a correct letter in the correct spot will appear green
+    2. a correct letter in the wrong spot will appear yellow
+    3. a letter that does not appear in the final word will appear grey
+"""
+
 num_guesses = 6
-debug_mode = 0
 word_len = 5
-alphabetize_mode = 0
 debug_word = 'debug'
 box_str = '\u2588 '
 guess_str = ['', '', '', '', '', '']
@@ -262,6 +288,21 @@ def playing_fcn(soln):
 
 
 def main():
+
+    global debug_mode
+
+    parser = argparse.ArgumentParser(
+        formatter_class = CustomHelpFormatter,
+        description = help_text
+    )
+
+    parser.add_argument("-d", "--debug_mode",   dest = "debug_mode",        action = 'store_true', help="enable printing of non-essential debug messages, solution will be 'debug'")
+    parser.add_argument("-a", "--alphabatize",  dest = "alphabetize_mode",  action = 'store_true', help="alphabatizes a word list to be copied into wordle_word_dict.py")
+
+    args = parser.parse_args()
+
+    debug_mode          = args.debug_mode
+    alphabetize_mode    = args.alphabetize_mode
 
     # takes the specified list below and prints them in alphabetical order, ready to copy into wordle_word_dict.py
     if alphabetize_mode:

@@ -1,6 +1,5 @@
 from platform import java_ver
 from re import I
-from this import d
 
 
 valid_answer_list = [
