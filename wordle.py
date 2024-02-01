@@ -6,7 +6,6 @@ import math
 import signal
 import argparse
 import socket
-from datetime import datetime
 import wordle_word_dict
 
 class CustomHelpFormatter(
@@ -375,7 +374,7 @@ def main():
         elif debug_mode:
             soln = debug_word
         else:
-            random.seed(datetime.now())
+            random.seed(int(time.time()))
             rnd_idx = random.randrange(0, len(wordle_word_dict.valid_answer_list))
             soln = wordle_word_dict.valid_answer_list[rnd_idx]
 
