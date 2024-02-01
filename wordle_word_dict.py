@@ -15384,8 +15384,7 @@ valid_word_list = [
 
 all_letters = 'abcdefghijklmnopqrstuvwxyz'
 
-num_letters = 26
-
+# list all valid characters
 valid_char_list = [
     'a',
     'b',
@@ -15414,6 +15413,11 @@ valid_char_list = [
     'y',
     'z'
 ]
+
+# capture the number of valid characters
+num_letters = len(valid_char_list)
+
+# various lists that will contain various statuses per letter
 keyboard_status = []
 soln_num_letter_per_word = []
 guess_num_letter_per_word = []
