@@ -5,6 +5,7 @@ import time
 import math
 import signal
 import argparse
+import socket
 from datetime import datetime
 import wordle_word_dict
 
@@ -26,6 +27,10 @@ in alphabetical order instead of a day-by-day list which is easy to cheat.
 If you want to make a version of this for yourself, I recommend using the word
 dictionaries from this wordle_word_dict.py
 
+The score calculation defined below:
+    (# of guesses) * (time in seconds) * 100
+    (lower score is better)
+
 ### Rules of Wordle ###
 -   You must guess a 5 letter word in 6 or fewer guesses
 -   Your guesses must be a word in the dictionary of valid words (there are almost 13k valid words)
@@ -35,6 +40,7 @@ dictionaries from this wordle_word_dict.py
     3. a letter that does not appear in the final word will appear grey
 """
 
+connection_port = 5555
 num_guesses = 6
 word_len = 5
 debug_word = 'debug'
@@ -289,27 +295,33 @@ def playing_fcn(soln):
 
         post_game_rpt(soln)
 
-    return i
+    return i + 1
 
 
 def main():
 
     global debug_mode
+    num_players = 1
+    multiplayer_mode = False
 
     parser = argparse.ArgumentParser(
         formatter_class = CustomHelpFormatter,
         description = help_text
     )
 
-    parser.add_argument("-d", "--debug_mode",   dest = "debug_mode",        action = 'store_true', help="enable printing of non-essential debug messages, solution will be 'debug'")
-    parser.add_argument("-a", "--alphabatize",  dest = "alphabetize_mode",  action = 'store_true', help="alphabatizes a word list to be copied into wordle_word_dict.py")
-    parser.add_argument("-f", "--force_mode",   dest = "force_mode",  type = str, nargs = 1, help="force the game Wordle to be played with this word")
+    parser.add_argument("-d", "--debug_mode",   dest = "debug_mode",        action = 'store_true',  help="enable printing of non-essential debug messages, solution will be 'debug'")
+    parser.add_argument("-a", "--alphabatize",  dest = "alphabetize_mode",  action = 'store_true',  help="alphabatizes a word list to be copied into wordle_word_dict.py")
+    parser.add_argument("-f", "--force_mode",   dest = "force_mode", type = str, nargs = 1,         help="force the game Wordle to be played with this word")
+    parser.add_argument("-o", "--host_mode",    dest = "host_mode",         action = 'store_true',  help="launches wordle in multiplayer mode as host")
+    parser.add_argument("-c", "--client_mode",  dest = "client_mode",       action = 'store_true',  help="launches wordle in multiplayer mode as client (solution will be overwritten by host)")
 
     args = parser.parse_args()
 
     debug_mode          = args.debug_mode
     alphabetize_mode    = args.alphabetize_mode
     force_mode          = args.force_mode
+    host_mode           = args.host_mode
+    client_mode         = args.client_mode
 
     # takes the specified list below and prints them in alphabetical order, ready to copy into wordle_word_dict.py
     if alphabetize_mode:
@@ -326,7 +338,36 @@ def main():
             wordle_word_dict.guess_num_letter_per_word.append(0)
             wordle_word_dict.guess_num_letter_per_word_printed.append(0)
             wordle_word_dict.keyboard_status.append(0)
-        start_time = time.time()
+
+        # Set up server
+        if host_mode:
+            try:
+                server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                server_socket.settimeout(10)
+                server_socket.bind(('localhost', connection_port))
+                server_socket.listen(1)
+                # Accept client connection
+                print("Waiting for client connection...")
+                client_socket, address = server_socket.accept()
+                print("Connected to", address)
+                num_players = num_players + 1
+                _ = input(f"{color.GREEN}GET READY!{color.RESET} Multiplayer mode slected\nPress 'Enter' to continue...")
+                multiplayer_mode = True
+            except TimeoutError or UnboundLocalError:
+                host_mode = False
+                if debug_mode:
+                    _ = input(f"No cliets found, Playing Singleplayer\nPress 'Enter' to continue...")
+        elif client_mode:
+            try:
+                # Connect to server
+                client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                client_socket.settimeout(10)
+                client_socket.connect(('localhost', connection_port))
+                multiplayer_mode = True
+            except ConnectionRefusedError or OSError:
+                client_mode = False
+                if debug_mode:
+                    _ = input(f"Connection Failed, Playing Singleplayer\nPress 'Enter' to continue...")
 
         if force_mode:
             _ = input(f"About to play Wordle with solution: {color.GREEN}{force_mode[0]}{color.RESET}\nPress 'Enter' to continue...")
@@ -338,10 +379,23 @@ def main():
             rnd_idx = random.randrange(0, len(wordle_word_dict.valid_answer_list))
             soln = wordle_word_dict.valid_answer_list[rnd_idx]
 
-        num_guesses = playing_fcn(soln)
+        # if in multiplayer, transmit data
+        if multiplayer_mode:
+            if host_mode:
+                client_socket.send(str(soln).encode())
+                server_socket.close()
+            elif client_mode:
+                client_socket.settimeout(600) # ten minute wait time for the host to start
+                print(f"{color.GREEN}GET READY!{color.RESET} Multiplayer mode slected\nWaiting for host to start...")
+                received_data = client_socket.recv(1024).decode()
+                soln = str(received_data)
+                client_socket.close()
 
+        start_time = time.time()
+        num_guesses = playing_fcn(soln)
         end_time = time.time()
-        print(f"SCORE : {math.floor(num_guesses * (end_time - start_time))}")
+
+        print(f"SCORE : {math.floor(num_guesses * (end_time - start_time) * 100)}")
 
 if __name__ == '__main__':
     main()
