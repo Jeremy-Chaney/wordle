@@ -364,7 +364,7 @@ def main():
                 client_socket.settimeout(10)
                 client_socket.connect(('localhost', connection_port))
                 multiplayer_mode = True
-            except ConnectionRefusedError or OSError:
+            except ConnectionRefusedError or TimeoutError:
                 client_mode = False
                 if debug_mode:
                     _ = input(f"Connection Failed, Playing Singleplayer\nPress 'Enter' to continue...")
