@@ -90,11 +90,11 @@ def print_keyboard():
                     print(str(letter_idx))
                     print(str(letter_status))
 
-                if letter_status == '1':
+                if letter_status == 1:
                     keyboard_str_updated = keyboard_str_updated + color.YELLOW + kb_line[i] + color.RESET
-                elif letter_status == '2':
+                elif letter_status == 2:
                     keyboard_str_updated = keyboard_str_updated + color.GREEN + kb_line[i] + color.RESET
-                elif letter_status == '3':
+                elif letter_status == 3:
                     keyboard_str_updated = keyboard_str_updated + color.GREY + kb_line[i] + color.RESET
                 else:
                     keyboard_str_updated = keyboard_str_updated + color.WHITE + kb_line[i] + color.RESET
@@ -112,18 +112,18 @@ def update_keyboard(guess_wd, soln):
 
             # update to green status if correct letter and place is true
             if soln[i] == guess_wd[i]:
-                wordle_word_dict.keyboard_status[letter_idx] = '2'
+                wordle_word_dict.keyboard_status[letter_idx] = 2
 
             # update to yellow status only if it's not already green
             else:
-                if wordle_word_dict.keyboard_status[letter_idx] == '2':
-                    wordle_word_dict.keyboard_status[letter_idx] = '2'
+                if wordle_word_dict.keyboard_status[letter_idx] == 2:
+                    wordle_word_dict.keyboard_status[letter_idx] = 2
                 else:
-                    wordle_word_dict.keyboard_status[letter_idx] = '1'
+                    wordle_word_dict.keyboard_status[letter_idx] = 1
 
         # if letter is nowhere in the word, change to grey status
         else:
-            wordle_word_dict.keyboard_status[letter_idx] = '3'
+            wordle_word_dict.keyboard_status[letter_idx] = 3
 
 def wordle_print(guess_wd, soln):
     """
@@ -133,40 +133,36 @@ def wordle_print(guess_wd, soln):
     if debug_mode:
         print(guess_wd)
 
-    for i in range(len(guess_wd)):
+    if len(guess_wd) != 0:
+        for i in range(len(wordle_word_dict.guess_num_letter_per_word)):
+            wordle_word_dict.guess_num_letter_per_word[i] = 0
+            wordle_word_dict.guess_num_letter_per_word_printed[i] = 0
 
-        if guess_wd[i] != '\n':
-            if soln.find(guess_wd[i]) != -1:
-                if soln[i] == guess_wd[i]:
-                    wordle_str = wordle_str + " " + color.GREEN_BG + " " + guess_wd[i] + " " + color.RESET
+            for letter in guess_wd:
+                if letter == wordle_word_dict.valid_char_list[i]:
+                    wordle_word_dict.guess_num_letter_per_word[i] = wordle_word_dict.guess_num_letter_per_word[i] + 1
+
+        for i in range(len(guess_wd)):
+            if guess_wd[i] != '\n':
+                if soln.find(guess_wd[i]) != -1:
+                    if soln[i] == guess_wd[i]:
+                        for letter in range(len(wordle_word_dict.valid_char_list)):
+                            if wordle_word_dict.valid_char_list[letter] == guess_wd[i]:
+                                wordle_word_dict.guess_num_letter_per_word_printed[letter] = wordle_word_dict.guess_num_letter_per_word_printed[letter] + 1
+                        wordle_str = wordle_str + " " + color.GREEN_BG + " " + guess_wd[i] + " " + color.RESET
+                    else:
+                        for letter in range(len(wordle_word_dict.valid_char_list)):
+                            if wordle_word_dict.valid_char_list[letter] == guess_wd[i]:
+                                if wordle_word_dict.guess_num_letter_per_word[letter] <= wordle_word_dict.soln_num_letter_per_word[letter]:
+                                    wordle_str = wordle_str + " " + color.YELLOW_BG + " " + guess_wd[i] + " " + color.RESET
+                                elif wordle_word_dict.guess_num_letter_per_word_printed[letter] < wordle_word_dict.soln_num_letter_per_word[letter]:
+                                    wordle_str = wordle_str + " " + color.YELLOW_BG + " " + guess_wd[i] + " " + color.RESET
+                                    wordle_word_dict.guess_num_letter_per_word_printed[letter] = wordle_word_dict.guess_num_letter_per_word_printed[letter] + 1
+                                else:
+                                    wordle_str = wordle_str + " " + color.GREY_BG + " " + guess_wd[i] + " " + color.RESET
                 else:
-                    wordle_str = wordle_str + " " + color.YELLOW_BG + " " + guess_wd[i] + " " + color.RESET
-            else:
-                wordle_str = wordle_str + " " + color.GREY_BG + " " + guess_wd[i] + " " + color.RESET
-    print(wordle_str + color.RESET + '\n')
-    wordle_str = ''
-
-def final_print(guess_wd, soln):
-    """
-    print the color-coded guesses with boxes
-    """
-    wordle_str = ''
-    if debug_mode:
-        print(guess_wd)
-        print(str(wordle_word_dict.keyboard_status))
-
-    for i in range(len(guess_wd)):
-
-        if guess_wd[i] != '\n':
-            if soln.find(guess_wd[i]) != -1:
-                if soln[i] == guess_wd[i]:
-                    wordle_str = wordle_str + " " + color.GREEN_BG + " " + guess_wd[i] + " " + color.RESET
-                else:
-                    wordle_str = wordle_str + " " + color.YELLOW_BG + " " + guess_wd[i] + " " + color.RESET
-            else:
-                wordle_str = wordle_str + " " + color.GREY_BG + " " + guess_wd[i] + " " + color.RESET
-    print(wordle_str + '\n')
-    wordle_str = ''
+                    wordle_str = wordle_str + " " + color.GREY_BG + " " + guess_wd[i] + " " + color.RESET
+        print(wordle_str + color.RESET + '\n')
 
 def get_valid_word(guess_num, soln):
     """
@@ -210,7 +206,7 @@ def post_game_rpt(soln):
     end-of-game print handled here
     """
     for i in range(num_guesses):
-        final_print(guess_str[i], soln)
+        wordle_print(guess_str[i], soln)
 
 def ascii_fail_rpt(soln):
     """
@@ -254,6 +250,15 @@ def playing_fcn(soln):
     """
     victory = 0
     ascii_mode = 0
+
+    # reset the solution number per word to the new solution
+    for i in range(len(wordle_word_dict.soln_num_letter_per_word)):
+        wordle_word_dict.soln_num_letter_per_word[i] = 0
+
+        for letter in soln:
+            if letter == wordle_word_dict.valid_char_list[i]:
+                wordle_word_dict.soln_num_letter_per_word[i] = wordle_word_dict.soln_num_letter_per_word[i] + 1
+
     for i in range(num_guesses):
 
         guess_str[i], ascii_trig = get_valid_word(i, soln)
@@ -298,11 +303,13 @@ def main():
 
     parser.add_argument("-d", "--debug_mode",   dest = "debug_mode",        action = 'store_true', help="enable printing of non-essential debug messages, solution will be 'debug'")
     parser.add_argument("-a", "--alphabatize",  dest = "alphabetize_mode",  action = 'store_true', help="alphabatizes a word list to be copied into wordle_word_dict.py")
+    parser.add_argument("-f", "--force_mode",   dest = "force_mode",  type = str, nargs = 1, help="force the game Wordle to be played with this word")
 
     args = parser.parse_args()
 
     debug_mode          = args.debug_mode
     alphabetize_mode    = args.alphabetize_mode
+    force_mode          = args.force_mode
 
     # takes the specified list below and prints them in alphabetical order, ready to copy into wordle_word_dict.py
     if alphabetize_mode:
@@ -314,9 +321,17 @@ def main():
 
     # the game will be played in either debug mode or normal mode
     else:
+        for i in range(wordle_word_dict.num_letters):
+            wordle_word_dict.soln_num_letter_per_word.append(0)
+            wordle_word_dict.guess_num_letter_per_word.append(0)
+            wordle_word_dict.guess_num_letter_per_word_printed.append(0)
+            wordle_word_dict.keyboard_status.append(0)
         start_time = time.time()
 
-        if debug_mode:
+        if force_mode:
+            _ = input(f"About to play Wordle with solution: {color.GREEN}{force_mode[0]}{color.RESET}\nPress 'Enter' to continue...")
+            soln = force_mode[0]
+        elif debug_mode:
             soln = debug_word
         else:
             random.seed(datetime.now())
