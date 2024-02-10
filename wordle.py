@@ -6,6 +6,7 @@ import math
 import signal
 import argparse
 import socket
+import threading
 import wordle_word_dict
 
 class CustomHelpFormatter(
@@ -51,6 +52,28 @@ keyboard_str = [
     ' a s d f g h j k l ',
     '  z x c v b n m',
 ]
+
+def handle_client(client_socket, client_address, soln):
+    """
+    Function to handle client connection
+    """
+    print("Connected to", client_address)
+
+    # Set string variable
+    shared_string = soln
+
+    # Send string to client
+    client_socket.send(shared_string.encode())
+
+    # Close client socket
+    client_socket.close()
+    print("Connection with", client_address, "closed")
+
+def close_connection(client_socket, client_address):
+    """
+    Close client socket
+    """
+    client_socket.close()
 
 class color:
     GREY        = "\033[38;5;246m"
@@ -312,6 +335,7 @@ def main():
     parser.add_argument("-a", "--alphabatize",  dest = "alphabetize_mode",  action = 'store_true',  help="alphabatizes a word list to be copied into wordle_word_dict.py")
     parser.add_argument("-f", "--force_mode",   dest = "force_mode", type = str, nargs = 1,         help="force the game Wordle to be played with this word")
     parser.add_argument("-o", "--host_mode",    dest = "host_mode",         action = 'store_true',  help="launches wordle in multiplayer mode as host")
+    parser.add_argument("-p", "--max_players",  dest = "max_players",       type = int,             help="defines number of players",  default = 4)
     parser.add_argument("-c", "--client_mode",  dest = "client_mode",       action = 'store_true',  help="launches wordle in multiplayer mode as client (solution will be overwritten by host)")
 
     args = parser.parse_args()
@@ -320,6 +344,7 @@ def main():
     alphabetize_mode    = args.alphabetize_mode
     force_mode          = args.force_mode
     host_mode           = args.host_mode
+    max_players         = args.max_players
     client_mode         = args.client_mode
 
     # takes the specified list below and prints them in alphabetical order, ready to copy into wordle_word_dict.py
@@ -338,36 +363,6 @@ def main():
             wordle_word_dict.guess_num_letter_per_word_printed.append(0)
             wordle_word_dict.keyboard_status.append(0)
 
-        # Set up server
-        if host_mode:
-            try:
-                server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                server_socket.settimeout(10)
-                server_socket.bind(('localhost', connection_port))
-                server_socket.listen(1)
-                # Accept client connection
-                print("Waiting for client connection...")
-                client_socket, address = server_socket.accept()
-                print("Connected to", address)
-                num_players = num_players + 1
-                _ = input(f"{color.GREEN}GET READY!{color.RESET} Multiplayer mode slected\nPress 'Enter' to continue...")
-                multiplayer_mode = True
-            except TimeoutError or UnboundLocalError:
-                host_mode = False
-                if debug_mode:
-                    _ = input(f"No cliets found, Playing Singleplayer\nPress 'Enter' to continue...")
-        elif client_mode:
-            try:
-                # Connect to server
-                client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                client_socket.settimeout(10)
-                client_socket.connect(('localhost', connection_port))
-                multiplayer_mode = True
-            except ConnectionRefusedError or TimeoutError:
-                client_mode = False
-                if debug_mode:
-                    _ = input(f"Connection Failed, Playing Singleplayer\nPress 'Enter' to continue...")
-
         if force_mode:
             _ = input(f"About to play Wordle with solution: {color.GREEN}{force_mode[0]}{color.RESET}\nPress 'Enter' to continue...")
             soln = force_mode[0]
@@ -378,11 +373,49 @@ def main():
             rnd_idx = random.randrange(0, len(wordle_word_dict.valid_answer_list))
             soln = wordle_word_dict.valid_answer_list[rnd_idx]
 
+        # Set up server
+        if host_mode:
+            try:
+                server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                server_socket.settimeout(10)
+                server_socket.bind(('0.0.0.0', connection_port))
+                server_socket.listen(max_players)
+                print("Game IP Address:", socket.gethostbyname(socket.gethostname()))
+                client_handlers = []
+                while(num_players < max_players):
+                    # Accept client connection
+                    print("Waiting for client connection...")
+                    client_socket, address = server_socket.accept()
+                    client_handlers.append([client_socket, address])
+                    print("Connected to", address)
+                    multiplayer_mode = True
+                    num_players = num_players + 1
+                _ = input(f"{color.GREEN}GET READY!{color.RESET} Multiplayer mode slected with {num_players} Players!\nPress 'Enter' to continue...")
+            except TimeoutError or UnboundLocalError:
+                if num_players < 2:
+                    host_mode = False
+                    if debug_mode:
+                        _ = input(f"No cliets found, Playing Singleplayer\nPress 'Enter' to continue...")
+                else:
+                    _ = input(f"{color.GREEN}GET READY!{color.RESET} Multiplayer mode slected with {num_players} Players!\nPress 'Enter' to continue...")
+        elif client_mode:
+            try:
+                # Connect to server
+                server_ip = input("Enter the Game IP Address: ")
+                client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                client_socket.settimeout(10)
+                client_socket.connect((server_ip, connection_port))
+                multiplayer_mode = True
+            except ConnectionRefusedError or TimeoutError:
+                client_mode = False
+                if debug_mode:
+                    _ = input(f"Connection Failed, Playing Singleplayer\nPress 'Enter' to continue...")
+
         # if in multiplayer, transmit data
         if multiplayer_mode:
             if host_mode:
-                client_socket.send(str(soln).encode())
-                server_socket.close()
+                for client_socket, address in client_handlers:
+                    handle_client(client_socket, address, soln)
             elif client_mode:
                 client_socket.settimeout(600) # ten minute wait time for the host to start
                 print(f"{color.GREEN}GET READY!{color.RESET} Multiplayer mode slected\nWaiting for host to start...")
