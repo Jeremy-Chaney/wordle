@@ -4,6 +4,9 @@ Unlike the web-based version, the answer dictionary is stored in alphabetical or
 
 If you want to make a version of this for yourself, I recommend using the word dictionaries from this wordle_word_dict.py
 
+Multiplayer over WiFi now supported!
+    Run "wordle.py -h" for more information.
+
 ### Rules of Wordle ###
 -   You must guess a 5 letter word in 6 or fewer guesses
 -   Your guesses must be a word in the dictionary of valid words (there are almost 13k valid words)
