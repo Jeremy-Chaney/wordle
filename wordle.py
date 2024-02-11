@@ -371,12 +371,12 @@ def main(first_game = True):
     )
 
     # define the command-line argument variables
-    parser.add_argument("-d", "--debug_mode",   dest = "debug_mode",        action = 'store_true',  help="enable printing of non-essential debug messages, solution will be 'debug'")
-    parser.add_argument("-a", "--alphabatize",  dest = "alphabetize_mode",  action = 'store_true',  help="alphabatizes a word list to be copied into wordle_word_dict.py")
-    parser.add_argument("-f", "--force_mode",   dest = "force_mode", type = str, nargs = 1,         help="force the game Wordle to be played with this word")
-    parser.add_argument("-o", "--host_mode",    dest = "host_mode",         action = 'store_true',  help="launches wordle in multiplayer mode as host")
-    parser.add_argument("-p", "--max_players",  dest = "max_players",       type = int,             help="defines number of players",  default = 4)
-    parser.add_argument("-c", "--client_mode",  dest = "client_mode",       action = 'store_true',  help="launches wordle in multiplayer mode as client (solution will be overwritten by host)")
+    parser.add_argument("-d", "-debug_mode",    dest = "debug_mode",        action = 'store_true',  help="enable printing of non-essential debug messages, solution will be 'debug'")
+    parser.add_argument("-a", "-alphabatize",   dest = "alphabetize_mode",  action = 'store_true',  help="alphabatizes a word list to be copied into wordle_word_dict.py")
+    parser.add_argument("-f", "-force_mode",    dest = "force_mode", type = str, nargs = 1,         help="force the game Wordle to be played with this word")
+    parser.add_argument("-o", "-host",          dest = "host_mode",         action = 'store_true',  help="launches wordle in multiplayer mode as host")
+    parser.add_argument("-p", "-max_players",   dest = "max_players",       type = int,             help="defines number of players (only used in host mode)",  default = 4)
+    parser.add_argument("-j", "-join",          dest = "client_mode",       action = 'store_true',  help="launches wordle in multiplayer mode as client (solution will be overwritten by host)")
 
     # assign command line argument variables to their respective variables in the script
     args = parser.parse_args()
@@ -499,10 +499,10 @@ def main(first_game = True):
                 client_socket.close()
 
         start_time = time.time()
-        num_guesses = playing_fcn(soln)
+        g_num_guesses = playing_fcn(soln)
         end_time = time.time()
 
-        print(f"SCORE : {math.floor(num_guesses * (end_time - start_time) * 100)}")
+        print(f"SCORE : {math.floor(g_num_guesses * (end_time - start_time) * 100)}")
 
 if __name__ == '__main__':
     main()
