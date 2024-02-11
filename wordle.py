@@ -311,8 +311,8 @@ def playing_fcn(soln):
     """
     general function for the game to be running
     """
-    victory = 0
-    ascii_mode = 0 # hmm wonder what this does...
+    victory = False
+    ascii_mode = False # hmm wonder what this does...
 
     # reset the solution number per word to the new solution
     for i in range(len(wordle_word_dict.soln_num_letter_per_word)):
@@ -322,38 +322,33 @@ def playing_fcn(soln):
             if letter == wordle_word_dict.valid_char_list[i]:
                 wordle_word_dict.soln_num_letter_per_word[i] = wordle_word_dict.soln_num_letter_per_word[i] + 1
 
+    # keep looking for the 
     for i in range(num_guesses):
-
         guess_str[i], ascii_trig = get_valid_word(i, soln)
         if guess_str[i] == soln:
-            victory = i + 1
+            victory = True
             break
         if ascii_trig == 1:
-            if ascii_mode == 0:
-                ascii_mode = 1
-            else:
-                ascii_mode = 0
+            ascii_mode = not ascii_mode
 
+    # We're in the engame now...
     clear()
-
     if ascii_mode:
-        if victory == 0:
+        if not victory:
             ascii_fail_rpt(soln)
         else:
             ascii_pass_rpt(soln)
-            print("\n\n" + str(i + 1) + '/6')
-
+            print(f"\n\n {str(i + 1)}/{num_guesses}")
     else:
-        if victory == 0:
+        if not victory:
             print('wow... you are bad at this')
-            print('The word was ' + soln)
+            print(f"The word was {soln}")
         else:
-            print('YOU GOT IT!\n' + str(i + 1) + '/6')
+            print(f"YOU GOT IT!\n{color.GREEN}{str(i + 1)}{color.RESET}/{num_guesses}")
 
         post_game_rpt(soln)
 
     return i + 1
-
 
 def main(first_game = True):
 
@@ -373,7 +368,7 @@ def main(first_game = True):
     # define the command-line argument variables
     parser.add_argument("-d", "-debug_mode",    dest = "debug_mode",        action = 'store_true',  help="enable printing of non-essential debug messages, solution will be 'debug'")
     parser.add_argument("-a", "-alphabatize",   dest = "alphabetize_mode",  action = 'store_true',  help="alphabatizes a word list to be copied into wordle_word_dict.py")
-    parser.add_argument("-f", "-force_mode",    dest = "force_mode", type = str, nargs = 1,         help="force the game Wordle to be played with this word")
+    parser.add_argument("-f", "-force_mode",    dest = "force_mode",        type = str, nargs = 1,  help="force the game Wordle to be played with this word")
     parser.add_argument("-o", "-host",          dest = "host_mode",         action = 'store_true',  help="launches wordle in multiplayer mode as host")
     parser.add_argument("-p", "-max_players",   dest = "max_players",       type = int,             help="defines number of players (only used in host mode)",  default = 4)
     parser.add_argument("-j", "-join",          dest = "client_mode",       action = 'store_true',  help="launches wordle in multiplayer mode as client (solution will be overwritten by host)")
