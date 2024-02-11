@@ -38,6 +38,25 @@ The score calculation defined below:
     1. a correct letter in the correct spot will appear green
     2. a correct letter in the wrong spot will appear yellow
     3. a letter that does not appear in the final word will appear grey
+    4. and most of all...
+
+     ^   ^            ^   ^
+    / \\ / \\          / \\ / \\
+    ||| |||          ||| |||
+     \\\\  \\\\ HAVE FUN  \\\\  \\\\
+    ||| |||          ||| |||
+    \\ / \\ /          \\ / \\ /
+     V   V            V   V
+"""
+
+end_screen = """
+ ^   ^                       ^   ^
+/ \\ / \\                     / \\ / \\
+||| |||                     ||| |||
+ \\\\  \\\\ Thanks for Playing!  \\\\  \\\\
+||| |||                     ||| |||
+\\ / \\ /                     \\ / \\ /
+ V   V                       V   V
 """
 
 connection_port = 5555
@@ -156,19 +175,34 @@ def update_keyboard(guess_wd, soln):
 def wordle_print(guess_wd, soln):
     """
     print the color-coded guesses with characters
+
+    Complex logic below is to print NO MORE yellow/green
+    letters in a given guess than there are repeats of that
+    same letter in the solution.
     """
     wordle_str = ''
     if debug_mode:
         print(guess_wd)
 
     if len(guess_wd) != 0:
+
+        # clear out lists for this guess and record how many times each letter appears in this guess
         for i in range(len(wordle_word_dict.guess_num_letter_per_word)):
             wordle_word_dict.guess_num_letter_per_word[i] = 0
+            wordle_word_dict.guess_num_letter_green_per_word[i] = 0
             wordle_word_dict.guess_num_letter_per_word_printed[i] = 0
 
             for letter in guess_wd:
                 if letter == wordle_word_dict.valid_char_list[i]:
                     wordle_word_dict.guess_num_letter_per_word[i] = wordle_word_dict.guess_num_letter_per_word[i] + 1
+
+        # record how many of a given letter are in correct location for a given guess
+        for i in range(len(guess_wd)):
+            if guess_wd[i] != '\n':
+                if guess_wd[i] == soln[i]:
+                    for letter in range(len(wordle_word_dict.valid_char_list)):
+                        if wordle_word_dict.valid_char_list[letter] == guess_wd[i]:
+                            wordle_word_dict.guess_num_letter_green_per_word[letter] = wordle_word_dict.guess_num_letter_green_per_word[letter] + 1
 
         for i in range(len(guess_wd)):
             if guess_wd[i] != '\n':
@@ -183,7 +217,8 @@ def wordle_print(guess_wd, soln):
                             if wordle_word_dict.valid_char_list[letter] == guess_wd[i]:
                                 if wordle_word_dict.guess_num_letter_per_word[letter] <= wordle_word_dict.soln_num_letter_per_word[letter]:
                                     wordle_str = wordle_str + " " + color.YELLOW_BG + " " + guess_wd[i] + " " + color.RESET
-                                elif wordle_word_dict.guess_num_letter_per_word_printed[letter] < wordle_word_dict.soln_num_letter_per_word[letter]:
+                                    wordle_word_dict.guess_num_letter_per_word_printed[letter] = wordle_word_dict.guess_num_letter_per_word_printed[letter] + 1
+                                elif wordle_word_dict.guess_num_letter_per_word_printed[letter] + wordle_word_dict.guess_num_letter_green_per_word[letter] < wordle_word_dict.soln_num_letter_per_word[letter]:
                                     wordle_str = wordle_str + " " + color.YELLOW_BG + " " + guess_wd[i] + " " + color.RESET
                                     wordle_word_dict.guess_num_letter_per_word_printed[letter] = wordle_word_dict.guess_num_letter_per_word_printed[letter] + 1
                                 else:
@@ -277,7 +312,7 @@ def playing_fcn(soln):
     general function for the game to be running
     """
     victory = 0
-    ascii_mode = 0
+    ascii_mode = 0 # hmm wonder what this does...
 
     # reset the solution number per word to the new solution
     for i in range(len(wordle_word_dict.soln_num_letter_per_word)):
@@ -329,11 +364,13 @@ def main(first_game = True):
     num_players = 1
     multiplayer_mode = False
 
+    # format the parser...
     parser = argparse.ArgumentParser(
         formatter_class = CustomHelpFormatter,
         description = help_text
     )
 
+    # define the command-line argument variables
     parser.add_argument("-d", "--debug_mode",   dest = "debug_mode",        action = 'store_true',  help="enable printing of non-essential debug messages, solution will be 'debug'")
     parser.add_argument("-a", "--alphabatize",  dest = "alphabetize_mode",  action = 'store_true',  help="alphabatizes a word list to be copied into wordle_word_dict.py")
     parser.add_argument("-f", "--force_mode",   dest = "force_mode", type = str, nargs = 1,         help="force the game Wordle to be played with this word")
@@ -341,14 +378,14 @@ def main(first_game = True):
     parser.add_argument("-p", "--max_players",  dest = "max_players",       type = int,             help="defines number of players",  default = 4)
     parser.add_argument("-c", "--client_mode",  dest = "client_mode",       action = 'store_true',  help="launches wordle in multiplayer mode as client (solution will be overwritten by host)")
 
+    # assign command line argument variables to their respective variables in the script
     args = parser.parse_args()
-
     debug_mode          = args.debug_mode
     alphabetize_mode    = args.alphabetize_mode
     force_mode          = args.force_mode
     host_mode           = args.host_mode
     if first_game:
-        max_players         = args.max_players
+        max_players     = args.max_players
     client_mode         = args.client_mode
 
     # takes the specified list below and prints them in alphabetical order, ready to copy into wordle_word_dict.py
@@ -365,11 +402,13 @@ def main(first_game = True):
             if first_game:
                 wordle_word_dict.soln_num_letter_per_word.append(0)
                 wordle_word_dict.guess_num_letter_per_word.append(0)
+                wordle_word_dict.guess_num_letter_green_per_word.append(0)
                 wordle_word_dict.guess_num_letter_per_word_printed.append(0)
                 wordle_word_dict.keyboard_status.append(0)
             else:
                 wordle_word_dict.soln_num_letter_per_word[i] = 0
                 wordle_word_dict.guess_num_letter_per_word[i] = 0
+                wordle_word_dict.guess_num_letter_green_per_word[i] = 0
                 wordle_word_dict.guess_num_letter_per_word_printed[i] = 0
                 wordle_word_dict.keyboard_status[i] = 0
 
@@ -413,6 +452,7 @@ def main(first_game = True):
                     if debug_mode:
                         _ = input(f"No cliets found, Playing Singleplayer\nPress 'Enter' to continue...")
                 else:
+                    print(f"{color.GREEN}INFO{color.RESET} : lowering max_players variable to {num_players}, re-launch script if you want to increase again")
                     _ = input(f"{color.GREEN}GET READY!{color.RESET} Multiplayer mode slected with {num_players} Players!\nPress 'Enter' to continue...")
                     max_players = num_players
         elif client_mode:
@@ -472,7 +512,7 @@ if __name__ == '__main__':
         if play_again == 'Y' or play_again == 'y' or play_again == 'Yes' or play_again == 'yes':
             main(first_game = False)
         elif play_again == 'N' or play_again == 'n' or play_again == 'No' or play_again == 'no':
-            print("Thanks for playing!")
+            print(end_screen)
             exit()
         else:
             print("Sorry, that wasn't a valid input try again...")

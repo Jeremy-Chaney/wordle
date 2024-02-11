@@ -2,6 +2,48 @@ from platform import java_ver
 from re import I
 
 
+all_letters = 'abcdefghijklmnopqrstuvwxyz'
+
+# list all valid characters
+valid_char_list = [
+    'a',
+    'b',
+    'c',
+    'd',
+    'e',
+    'f',
+    'g',
+    'h',
+    'i',
+    'j',
+    'k',
+    'l',
+    'm',
+    'n',
+    'o',
+    'p',
+    'q',
+    'r',
+    's',
+    't',
+    'u',
+    'v',
+    'w',
+    'x',
+    'y',
+    'z'
+]
+
+# capture the number of valid characters
+num_letters = len(valid_char_list)
+
+# various lists that will contain various statuses per letter
+keyboard_status = []
+soln_num_letter_per_word = []
+guess_num_letter_per_word = []
+guess_num_letter_green_per_word = []
+guess_num_letter_per_word_printed = []
+
 valid_answer_list = [
 	'aback',
 	'abase',
@@ -15381,44 +15423,3 @@ valid_word_list = [
 	'zymes',
 	'zymic'
 ]
-
-all_letters = 'abcdefghijklmnopqrstuvwxyz'
-
-# list all valid characters
-valid_char_list = [
-    'a',
-    'b',
-    'c',
-    'd',
-    'e',
-    'f',
-    'g',
-    'h',
-    'i',
-    'j',
-    'k',
-    'l',
-    'm',
-    'n',
-    'o',
-    'p',
-    'q',
-    'r',
-    's',
-    't',
-    'u',
-    'v',
-    'w',
-    'x',
-    'y',
-    'z'
-]
-
-# capture the number of valid characters
-num_letters = len(valid_char_list)
-
-# various lists that will contain various statuses per letter
-keyboard_status = []
-soln_num_letter_per_word = []
-guess_num_letter_per_word = []
-guess_num_letter_per_word_printed = []
