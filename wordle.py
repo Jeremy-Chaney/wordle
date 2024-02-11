@@ -45,7 +45,7 @@ num_guesses = 6
 word_len = 5
 debug_word = 'debug'
 box_str = '\u2588 '
-guess_str = ['', '', '', '', '', '']
+guess_str = []
 
 keyboard_str = [
     'q w e r t y u i o p',
@@ -320,9 +320,12 @@ def playing_fcn(soln):
     return i + 1
 
 
-def main():
+def main(first_game = True):
 
     global debug_mode
+    global max_players
+    global guess_str
+    global num_guesses
     num_players = 1
     multiplayer_mode = False
 
@@ -344,7 +347,8 @@ def main():
     alphabetize_mode    = args.alphabetize_mode
     force_mode          = args.force_mode
     host_mode           = args.host_mode
-    max_players         = args.max_players
+    if first_game:
+        max_players         = args.max_players
     client_mode         = args.client_mode
 
     # takes the specified list below and prints them in alphabetical order, ready to copy into wordle_word_dict.py
@@ -358,10 +362,22 @@ def main():
     # the game will be played in either debug mode or normal mode
     else:
         for i in range(wordle_word_dict.num_letters):
-            wordle_word_dict.soln_num_letter_per_word.append(0)
-            wordle_word_dict.guess_num_letter_per_word.append(0)
-            wordle_word_dict.guess_num_letter_per_word_printed.append(0)
-            wordle_word_dict.keyboard_status.append(0)
+            if first_game:
+                wordle_word_dict.soln_num_letter_per_word.append(0)
+                wordle_word_dict.guess_num_letter_per_word.append(0)
+                wordle_word_dict.guess_num_letter_per_word_printed.append(0)
+                wordle_word_dict.keyboard_status.append(0)
+            else:
+                wordle_word_dict.soln_num_letter_per_word[i] = 0
+                wordle_word_dict.guess_num_letter_per_word[i] = 0
+                wordle_word_dict.guess_num_letter_per_word_printed[i] = 0
+                wordle_word_dict.keyboard_status[i] = 0
+
+        for i in range(num_guesses):
+            if first_game:
+                guess_str.append('')
+            else:
+                guess_str[i] = ''
 
         if force_mode:
             _ = input(f"About to play Wordle with solution: {color.GREEN}{force_mode[0]}{color.RESET}\nPress 'Enter' to continue...")
@@ -398,10 +414,29 @@ def main():
                         _ = input(f"No cliets found, Playing Singleplayer\nPress 'Enter' to continue...")
                 else:
                     _ = input(f"{color.GREEN}GET READY!{color.RESET} Multiplayer mode slected with {num_players} Players!\nPress 'Enter' to continue...")
+                    max_players = num_players
         elif client_mode:
             try:
-                # Connect to server
-                server_ip = input("Enter the Game IP Address: ")
+                server_ip = input("Enter the Game IP Address (Leave blank to use last host address): ")
+
+                # retreive the last IP Address to reuse in this game
+                if server_ip == "":
+                    try:
+                        last_ip_file = open("last_host_addr.txt", 'r')
+                        lines = []
+                        for line in last_ip_file:
+                            lines.append(line)
+                        server_ip = lines[0]
+                        last_ip_file.close()
+                    except FileNotFoundError:
+                        print("Unable to find the last IP Address, please manually type it in this time.")
+                        exit()
+
+                # save the last IP Address to avoid typing many times
+                last_ip_file = open("last_host_addr.txt", 'w')
+                last_ip_file.write(server_ip)
+                last_ip_file.close()
+
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(10)
                 client_socket.connect((server_ip, connection_port))
@@ -431,4 +466,14 @@ def main():
 
 if __name__ == '__main__':
     main()
+    while(1):
+        play_again = input(f"Would you like to play again? (Y/N):")
+        clear()
+        if play_again == 'Y' or play_again == 'y' or play_again == 'Yes' or play_again == 'yes':
+            main(first_game = False)
+        elif play_again == 'N' or play_again == 'n' or play_again == 'No' or play_again == 'no':
+            print("Thanks for playing!")
+            exit()
+        else:
+            print("Sorry, that wasn't a valid input try again...")
     end_time = time.time()
