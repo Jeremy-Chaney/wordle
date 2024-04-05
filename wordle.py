@@ -26,19 +26,25 @@ in alphabetical order instead of a day-by-day list which is easy to cheat.
 
 If you want to make a version of this for yourself, I recommend using the word
 dictionaries from this wordle_word_dict.py
+"""
+word_len = 5
+num_guesses = 6
+
+game_rules = f"""
 
 The score calculation defined below:
     (# of guesses) * (time in seconds) * 100
     (lower score is better)
 
 ### Rules of Wordle ###
--   You must guess a 5 letter word in 6 or fewer guesses
--   Your guesses must be a word in the dictionary of valid words (there are almost 13k valid words)
+-   You must guess a {word_len} letter word in {num_guesses} or fewer guesses
+-   Your guesses must be a word in the dictionary of valid words (there are {len(wordle_word_dict.valid_answer_list) + len(wordle_word_dict.valid_word_list)} valid words)
 -   You will get feedback after each valid guess:
     1. a correct letter in the correct spot will appear green
     2. a correct letter in the wrong spot will appear yellow
     3. a letter that does not appear in the final word will appear grey
-    4. and most of all...
+
+-   and most of all...
 
      ^   ^            ^   ^
     / \\ / \\          / \\ / \\
@@ -60,8 +66,6 @@ end_screen = """
 """
 
 connection_port = 5555
-num_guesses = 6
-word_len = 5
 debug_word = 'debug'
 box_str = '\u2588 '
 guess_str = []
@@ -87,12 +91,6 @@ def handle_client(client_socket, client_address, soln):
     # Close client socket
     client_socket.close()
     print("Connection with", client_address, "closed")
-
-def close_connection(client_socket, client_address):
-    """
-    Close client socket
-    """
-    client_socket.close()
 
 class color:
     GREY        = "\033[38;5;246m"
@@ -227,13 +225,12 @@ def wordle_print(guess_wd, soln):
                     wordle_str = wordle_str + " " + color.GREY_BG + " " + guess_wd[i] + " " + color.RESET
         print(wordle_str + color.RESET + '\n')
 
-def get_valid_word(guess_num, soln):
+def get_valid_word(guess_num, soln, ascii_mode):
     """
     checks if word is in valid word dictionary, and matches the word length defined
 
     also updates updates the keyboard status once a valid word is found
     """
-    ascii_trig = 0
 
     def handle_ctrl_c(signal, frame):
         print(f"\n{color.GREEN}INFO{color.RESET} : user did CTRL+C exit after {guess_num} guesses, solution = {soln}")
@@ -243,16 +240,19 @@ def get_valid_word(guess_num, soln):
     while(1):
         pre_guess_print(guess_num, soln)
         print_keyboard()
-        in_str = input("\nEnter your guess: ")
+        if ascii_mode:
+            in_str = input("\nEaster your guess: ")
+        else:
+            in_str = input("\nEnter your guess: ")
         if len(in_str) == word_len:
             if in_str in wordle_word_dict.valid_word_list:
                 break
 
             if in_str == 'ascii':
-                ascii_trig = 1
+                ascii_mode = not ascii_mode
 
     update_keyboard(in_str, soln)
-    return in_str, ascii_trig
+    return in_str, ascii_mode
 
 def pre_guess_print(guess_num, soln):
     """
@@ -322,14 +322,12 @@ def playing_fcn(soln):
             if letter == wordle_word_dict.valid_char_list[i]:
                 wordle_word_dict.soln_num_letter_per_word[i] = wordle_word_dict.soln_num_letter_per_word[i] + 1
 
-    # keep looking for the 
+    # keep looking for the
     for i in range(num_guesses):
-        guess_str[i], ascii_trig = get_valid_word(i, soln)
+        guess_str[i], ascii_mode = get_valid_word(i, soln, ascii_mode)
         if guess_str[i] == soln:
             victory = True
             break
-        if ascii_trig == 1:
-            ascii_mode = not ascii_mode
 
     # We're in the engame now...
     clear()
@@ -362,7 +360,8 @@ def main(first_game = True):
     # format the parser...
     parser = argparse.ArgumentParser(
         formatter_class = CustomHelpFormatter,
-        description = help_text
+        description = help_text,
+        epilog = game_rules
     )
 
     # define the command-line argument variables
