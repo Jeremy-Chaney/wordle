@@ -9,6 +9,14 @@ import socket
 import threading
 import wordle_word_dict
 
+# putting Terminal Effects import in try/except in case user doesn't have that module
+try:
+    from terminaltexteffects.effects import effect_burn
+    from terminaltexteffects.effects import effect_beams
+    fancy_printing = True
+except ImportError:
+    fancy_printing = False
+
 class CustomHelpFormatter(
     argparse.RawDescriptionHelpFormatter,
     argparse.ArgumentDefaultsHelpFormatter,
@@ -276,36 +284,73 @@ def ascii_fail_rpt(soln):
     easter egg fail print
     """
     i = 0
+    rpt_print = ""
     for line in wordle_word_dict.ascii_fail:
         if line.find("xxx") == -1:
-            print(line)
+            rpt_print = rpt_print + line + "\n"
         else:
-            print(line[0: line.find("xxx")] + color.RED_BG + " " + soln[i] + " " + color.RESET + line[line.find("xxx") + 3: len(line)])
+            if fancy_printing:
+                rpt_print = rpt_print + line[0: line.find("xxx")] + " " + soln[i] + " " + line[line.find("xxx") + 3: len(line)]  + "\n"
+            else:
+                rpt_print = rpt_print + line[0: line.find("xxx")] + color.RED_BG + " " + soln[i] + " " + color.RESET + line[line.find("xxx") + 3: len(line)]  + "\n"
             i = i + 1
+
+    if fancy_printing:
+        end_burn = effect_burn.Burn(rpt_print)
+        with end_burn.terminal_output() as terminal:
+            for frame in end_burn:
+                terminal.print(frame)
+    else:
+        print(rpt_print)
 
 def ascii_pass_rpt(soln):
     """
     easter egg pass print
     """
     i = 0
+    rpt_print = ""
+
     for line in wordle_word_dict.ascii_pass:
         if line.find("xxx") == -1:
-            print(line)
+            rpt_print = rpt_print + line + "\n"
         elif i == 0:
-            print(line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[2] + " " + color.RESET + line[line.find("xxx") + 3: len(line)])
+            if fancy_printing:
+                rpt_print = rpt_print + line[0: line.find("xxx")] + " " + soln[2] + " " + line[line.find("xxx") + 3: len(line)] + "\n"
+            else:
+                rpt_print = rpt_print + line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[2] + " " + color.RESET + line[line.find("xxx") + 3: len(line)] + "\n"
             i = i + 1
         elif i == 1:
-            print(line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[3] + " " + color.RESET + line[line.find("xxx") + 3: len(line)])
+            if fancy_printing:
+                rpt_print = rpt_print + line[0: line.find("xxx")] + " " + soln[3] + " " + line[line.find("xxx") + 3: len(line)] + "\n"
+            else:
+                rpt_print = rpt_print + line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[3] + " " + color.RESET + line[line.find("xxx") + 3: len(line)] + "\n"
             i = i + 1
         elif i == 2:
-            print(line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[1] + " " + color.RESET + line[line.find("xxx") + 3: len(line)])
+            if fancy_printing:
+                rpt_print = rpt_print + line[0: line.find("xxx")] + " " + soln[1] + " " + line[line.find("xxx") + 3: len(line)] + "\n"
+            else:
+                rpt_print = rpt_print + line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[1] + " " + color.RESET + line[line.find("xxx") + 3: len(line)] + "\n"
             i = i + 1
         elif i == 3:
-            print(line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[0] + " " + color.RESET + line[line.find("xxx") + 3: len(line)])
+            if fancy_printing:
+                rpt_print = rpt_print + line[0: line.find("xxx")] + " " + soln[0] + " " + line[line.find("xxx") + 3: len(line)] + "\n"
+            else:
+                rpt_print = rpt_print + line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[0] + " " + color.RESET + line[line.find("xxx") + 3: len(line)] + "\n"
             i = i + 1
         elif i == 4:
-            print(line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[4] + " " + color.RESET + line[line.find("xxx") + 3: len(line)])
+            if fancy_printing:
+                rpt_print = rpt_print + line[0: line.find("xxx")] + " " + soln[4] + " " + line[line.find("xxx") + 3: len(line)] + "\n"
+            else:
+                rpt_print = rpt_print + line[0: line.find("xxx")] + color.GREEN_BG + " " + soln[4] + " " + color.RESET + line[line.find("xxx") + 3: len(line)] + "\n"
             i = i + 1
+
+    if fancy_printing:
+        end_burn = effect_burn.Burn(rpt_print)
+        with end_burn.terminal_output() as terminal:
+            for frame in end_burn:
+                terminal.print(frame)
+    else:
+        print(rpt_print)
 
 def playing_fcn(soln):
     """
@@ -506,7 +551,15 @@ if __name__ == '__main__':
         if play_again == 'Y' or play_again == 'y' or play_again == 'Yes' or play_again == 'yes':
             main(first_game = False)
         elif play_again == 'N' or play_again == 'n' or play_again == 'No' or play_again == 'no':
-            print(end_screen)
+
+            if fancy_printing:
+                end_beam = effect_beams.Beams(end_screen)
+                end_beam.effect_config.final_gradient_frames = 2
+                with end_beam.terminal_output() as terminal:
+                    for frame in end_beam:
+                        terminal.print(frame)
+            else:
+                print(end_screen)
             exit()
         else:
             print("Sorry, that wasn't a valid input try again...")
