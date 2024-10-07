@@ -11,9 +11,13 @@ import wordle_word_dict
 
 # putting Terminal Effects import in try/except in case user doesn't have that module
 try:
+    fancy_printing = True
     from terminaltexteffects.effects import effect_burn
     from terminaltexteffects.effects import effect_beams
-    fancy_printing = True
+    from terminaltexteffects.effects import effect_bubbles
+    from terminaltexteffects.effects import effect_fireworks
+    from terminaltexteffects.effects import effect_wipe
+    from terminaltexteffects.effects import effect_crumble
 except ImportError:
     fancy_printing = False
 
@@ -127,6 +131,64 @@ def get_letter_idx(letter):
     for i in range(len(wordle_word_dict.valid_char_list)):
         if letter == wordle_word_dict.valid_char_list[i]:
             return i
+
+def burn_print(string_to_print):
+    """
+    Canned function to print using burning terminal effect
+    """
+    burn_str = effect_burn.Burn(string_to_print)
+    with burn_str.terminal_output() as terminal:
+        for frame in burn_str:
+            terminal.print(frame)
+
+def beam_print(string_to_print):
+    """
+    Canned function to print using beams terminal effect
+    """
+    beam_str = effect_beams.Beams(string_to_print)
+    beam_str.effect_config.final_gradient_frames = 2
+    with beam_str.terminal_output() as terminal:
+        for frame in beam_str:
+            terminal.print(frame)
+
+def bubble_print(string_to_print):
+    """
+    Canned function to print using bubbles terminal effect
+    """
+    bubble_str = effect_bubbles.Bubbles(string_to_print)
+    bubble_str.bubble_speed = 10
+    bubble_str.bubble_delay = 1
+    with bubble_str.terminal_output() as terminal:
+        for frame in bubble_str:
+            terminal.print(frame)
+
+def fireworks_print(string_to_print):
+    """
+    Canned function to print using fireworks terminal effect
+    """
+    fireworks_str = effect_fireworks.Fireworks(string_to_print)
+    fireworks_str.explode_anywhere = True
+    with fireworks_str.terminal_output() as terminal:
+        for frame in fireworks_str:
+            terminal.print(frame)
+
+def wipe_print(string_to_print):
+    """
+    Canned function to print using wipe terminal effect
+    """
+    wipe_str = effect_wipe.Wipe(string_to_print)
+    with wipe_str.terminal_output() as terminal:
+        for frame in wipe_str:
+            terminal.print(frame)
+
+def crumble_print(string_to_print):
+    """
+    Canned function to print using crumble terminal effect
+    """
+    crumble_str = effect_crumble.Crumble(string_to_print)
+    with crumble_str.terminal_output() as terminal:
+        for frame in crumble_str:
+            terminal.print(frame)
 
 def print_keyboard():
     """
@@ -296,10 +358,7 @@ def ascii_fail_rpt(soln):
             i = i + 1
 
     if fancy_printing:
-        end_burn = effect_burn.Burn(rpt_print)
-        with end_burn.terminal_output() as terminal:
-            for frame in end_burn:
-                terminal.print(frame)
+        burn_print(rpt_print)
     else:
         print(rpt_print)
 
@@ -345,10 +404,7 @@ def ascii_pass_rpt(soln):
             i = i + 1
 
     if fancy_printing:
-        end_burn = effect_burn.Burn(rpt_print)
-        with end_burn.terminal_output() as terminal:
-            for frame in end_burn:
-                terminal.print(frame)
+        bubble_print(rpt_print)
     else:
         print(rpt_print)
 
@@ -376,6 +432,7 @@ def playing_fcn(soln):
 
     # We're in the engame now...
     clear()
+    end_time = time.time()
     if ascii_mode:
         if not victory:
             ascii_fail_rpt(soln)
@@ -383,15 +440,21 @@ def playing_fcn(soln):
             ascii_pass_rpt(soln)
             print(f"\n\n {str(i + 1)}/{num_guesses}")
     else:
-        if not victory:
-            print('wow... you are bad at this')
-            print(f"The word was {soln}")
-        else:
-            print(f"YOU GOT IT!\n{color.GREEN}{str(i + 1)}{color.RESET}/{num_guesses}")
-
         post_game_rpt(soln)
 
-    return i + 1
+        if not victory:
+            if fancy_printing:
+                crumble_print(f"wow... you are bad at this\nThe word was {soln}")
+            else:
+                print('wow... you are bad at this')
+                print(f"The word was {soln}")
+        else:
+            if fancy_printing:
+                wipe_print(f"YOU GOT IT!\n{str(i + 1)}/{num_guesses}")
+            else:
+                print(f"YOU GOT IT!\n{color.GREEN}{str(i + 1)}{color.RESET}/{num_guesses}")
+
+    return i + 1, end_time
 
 def main(first_game = True):
 
@@ -538,8 +601,7 @@ def main(first_game = True):
                 client_socket.close()
 
         start_time = time.time()
-        g_num_guesses = playing_fcn(soln)
-        end_time = time.time()
+        g_num_guesses, end_time = playing_fcn(soln)
 
         print(f"SCORE : {math.floor(g_num_guesses * (end_time - start_time) * 100)}")
 
@@ -553,11 +615,7 @@ if __name__ == '__main__':
         elif play_again == 'N' or play_again == 'n' or play_again == 'No' or play_again == 'no':
 
             if fancy_printing:
-                end_beam = effect_beams.Beams(end_screen)
-                end_beam.effect_config.final_gradient_frames = 2
-                with end_beam.terminal_output() as terminal:
-                    for frame in end_beam:
-                        terminal.print(frame)
+                beam_print(end_screen)
             else:
                 print(end_screen)
             exit()
