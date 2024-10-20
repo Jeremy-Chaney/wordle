@@ -6,8 +6,8 @@ import math
 import signal
 import argparse
 import socket
-import threading
 import wordle_word_dict
+from enum import Enum
 
 # putting Terminal Effects import in try/except in case user doesn't have that module
 try:
@@ -88,6 +88,16 @@ keyboard_str = [
     '  z x c v b n m',
 ]
 
+class kbd_status(Enum):
+    """
+    Enumerated class to keep track of each letter's status
+    """
+    not_guessed = 0
+    invalid_letter = 1
+    wrong_pos = 2
+    right_pos = 3
+
+
 def handle_client(client_socket, client_address, soln):
     """
     Function to handle client connection
@@ -105,6 +115,9 @@ def handle_client(client_socket, client_address, soln):
     print("Connection with", client_address, "closed")
 
 class color:
+    """
+    Class used to make it easier to print colors
+    """
     GREY        = "\033[38;5;246m"
     GREEN       = "\033[38;5;10m"
     YELLOW      = "\033[38;5;220m"
@@ -205,11 +218,11 @@ def print_keyboard():
                     print(str(letter_idx))
                     print(str(letter_status))
 
-                if letter_status == 1:
+                if letter_status == kbd_status.wrong_pos:
                     keyboard_str_updated = keyboard_str_updated + color.YELLOW + kb_line[i] + color.RESET
-                elif letter_status == 2:
+                elif letter_status == kbd_status.right_pos:
                     keyboard_str_updated = keyboard_str_updated + color.GREEN + kb_line[i] + color.RESET
-                elif letter_status == 3:
+                elif letter_status == kbd_status.invalid_letter:
                     keyboard_str_updated = keyboard_str_updated + color.GREY + kb_line[i] + color.RESET
                 else:
                     keyboard_str_updated = keyboard_str_updated + color.WHITE + kb_line[i] + color.RESET
@@ -227,18 +240,18 @@ def update_keyboard(guess_wd, soln):
 
             # update to green status if correct letter and place is true
             if soln[i] == guess_wd[i]:
-                wordle_word_dict.keyboard_status[letter_idx] = 2
+                wordle_word_dict.keyboard_status[letter_idx] = kbd_status.right_pos
 
             # update to yellow status only if it's not already green
             else:
-                if wordle_word_dict.keyboard_status[letter_idx] == 2:
-                    wordle_word_dict.keyboard_status[letter_idx] = 2
+                if wordle_word_dict.keyboard_status[letter_idx] == kbd_status.right_pos:
+                    wordle_word_dict.keyboard_status[letter_idx] = kbd_status.right_pos
                 else:
-                    wordle_word_dict.keyboard_status[letter_idx] = 1
+                    wordle_word_dict.keyboard_status[letter_idx] = kbd_status.wrong_pos
 
         # if letter is nowhere in the word, change to grey status
         else:
-            wordle_word_dict.keyboard_status[letter_idx] = 3
+            wordle_word_dict.keyboard_status[letter_idx] = kbd_status.invalid_letter
 
 def wordle_print(guess_wd, soln):
     """
@@ -295,7 +308,7 @@ def wordle_print(guess_wd, soln):
                     wordle_str = wordle_str + " " + color.GREY_BG + " " + guess_wd[i] + " " + color.RESET
         print(wordle_str + color.RESET + '\n')
 
-def get_valid_word(guess_num, soln, ascii_mode):
+def get_valid_word(guess_num, soln, ascii_mode, hard_mode):
     """
     checks if word is in valid word dictionary, and matches the word length defined
 
@@ -316,7 +329,30 @@ def get_valid_word(guess_num, soln, ascii_mode):
             in_str = input("\nEnter your guess: ")
         if len(in_str) == word_len:
             if in_str in wordle_word_dict.valid_word_list:
-                break
+                if hard_mode:
+                    hard_mode_inv_reuse = False
+                    hard_mode_valid_unused = False
+                    hard_mode_right_pos_maintained = False
+
+                    # determine if any invalid letters are re-used in this guess...
+                    for i in range(len(in_str)):
+                        for letter_idx in range(len(wordle_word_dict.all_letters)):
+                            if in_str[i] == wordle_word_dict.all_letters[letter_idx]:
+                                if wordle_word_dict.keyboard_status[letter_idx] == kbd_status.invalid_letter:
+                                    hard_mode_inv_reuse = True
+
+                    # determine if all known letters are used in this guess...
+                    for i in range(len(wordle_word_dict.keyboard_status)):
+                        if (wordle_word_dict.keyboard_status[i] == kbd_status.right_pos) or (wordle_word_dict.keyboard_status[i] == kbd_status.wrong_pos):
+                            if in_str.find(wordle_word_dict.all_letters[i]) == -1:
+                                hard_mode_valid_unused = True
+
+                    # if no hard-mode checks tripped, it's a vlid guess
+                    if not (hard_mode_inv_reuse or hard_mode_valid_unused or hard_mode_right_pos_maintained):
+                        print(f"invalid_letter = {hard_mode_inv_reuse}, valid_unused = {hard_mode_valid_unused}, right_pos_maintained = {hard_mode_right_pos_maintained}")
+                        break
+                else:
+                    break
 
             if in_str == 'ascii':
                 ascii_mode = not ascii_mode
@@ -408,7 +444,7 @@ def ascii_pass_rpt(soln):
     else:
         print(rpt_print)
 
-def playing_fcn(soln):
+def playing_fcn(soln, hard_mode):
     """
     general function for the game to be running
     """
@@ -425,7 +461,7 @@ def playing_fcn(soln):
 
     # keep looking for the
     for i in range(num_guesses):
-        guess_str[i], ascii_mode = get_valid_word(i, soln, ascii_mode)
+        guess_str[i], ascii_mode = get_valid_word(i, soln, ascii_mode, hard_mode)
         if guess_str[i] == soln:
             victory = True
             break
@@ -479,6 +515,7 @@ def main(first_game = True):
     parser.add_argument("-o", "-host",          dest = "host_mode",         action = 'store_true',  help="launches wordle in multiplayer mode as host")
     parser.add_argument("-p", "-max_players",   dest = "max_players",       type = int,             help="defines number of players (only used in host mode)",  default = 4)
     parser.add_argument("-j", "-join",          dest = "client_mode",       action = 'store_true',  help="launches wordle in multiplayer mode as client (solution will be overwritten by host)")
+    parser.add_argument("-r", "-hard_mode",     dest = "hard_mode",         action = 'store_true',  help="launches wordle in hard mode")
 
     # assign command line argument variables to their respective variables in the script
     args = parser.parse_args()
@@ -489,6 +526,7 @@ def main(first_game = True):
     if first_game:
         max_players     = args.max_players
     client_mode         = args.client_mode
+    hard_mode           = args.hard_mode
 
     # takes the specified list below and prints them in alphabetical order, ready to copy into wordle_word_dict.py
     if alphabetize_mode:
@@ -601,9 +639,19 @@ def main(first_game = True):
                 client_socket.close()
 
         start_time = time.time()
-        g_num_guesses, end_time = playing_fcn(soln)
+        g_num_guesses, end_time = playing_fcn(soln, hard_mode)
 
-        print(f"SCORE : {math.floor(g_num_guesses * (end_time - start_time) * 100)}")
+        score = math.floor(g_num_guesses * (end_time - start_time) * 100)
+
+        if hard_mode:
+            if fancy_printing:
+                beam_print(f"HARD MODE\nRAW SCORE : {score}\n50% for completing hardmode : {math.floor(score / 2)}")
+            else:
+                print("HARD MODE")
+                print(f"RAW SCORE : {score}")
+                print(f"50% for completing hardmode : {math.floor(score / 2)}")
+        else:
+            print(f"SCORE : {score}")
 
 if __name__ == '__main__':
     main()
