@@ -97,7 +97,6 @@ class kbd_status(Enum):
     wrong_pos = 2
     right_pos = 3
 
-
 def handle_client(client_socket, client_address, soln):
     """
     Function to handle client connection
@@ -645,11 +644,11 @@ def main(first_game = True):
 
         if hard_mode:
             if fancy_printing:
-                beam_print(f"HARD MODE\nRAW SCORE : {score}\n50% for completing hardmode : {math.floor(score / 2)}")
+                beam_print(f"RAW SCORE : {score}\n-50% for completing HARD MODE\nSCORE : {math.floor(score / 2)}")
             else:
-                print("HARD MODE")
                 print(f"RAW SCORE : {score}")
-                print(f"50% for completing hardmode : {math.floor(score / 2)}")
+                print(f"-50% for completing HARD MODE")
+                print(f"SCORE : {math.floor(score / 2)}")
         else:
             print(f"SCORE : {score}")
 
