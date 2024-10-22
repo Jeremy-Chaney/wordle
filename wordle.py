@@ -27,6 +27,9 @@ class CustomHelpFormatter(
     argparse.MetavarTypeHelpFormatter):
     pass
 
+game_num = 0
+scorecard = []
+
 help_text = """
 Python Wordle by Jeremy Chaney
 
@@ -120,6 +123,7 @@ class color:
     GREY        = "\033[38;5;246m"
     GREEN       = "\033[38;5;10m"
     YELLOW      = "\033[38;5;220m"
+    RED         = "\033[38;5;196m"
     WHITE       = "\033[38;5;255m"
     RESET       = "\033[0;0m"
     GREEN_BG    = "\033[48;5;10m\033[38;5;232m"  # bold black text on green background
@@ -489,9 +493,9 @@ def playing_fcn(soln, hard_mode):
             else:
                 print(f"YOU GOT IT!\n{color.GREEN}{str(i + 1)}{color.RESET}/{num_guesses}")
 
-    return i + 1, end_time
+    return i + 1, end_time, victory
 
-def main(first_game = True):
+def main(game_num, first_game = True):
 
     global debug_mode
     global max_players
@@ -638,7 +642,7 @@ def main(first_game = True):
                 client_socket.close()
 
         start_time = time.time()
-        g_num_guesses, end_time = playing_fcn(soln, hard_mode)
+        g_num_guesses, end_time, victory = playing_fcn(soln, hard_mode)
 
         score = math.floor(g_num_guesses * (end_time - start_time) * 100)
 
@@ -648,23 +652,38 @@ def main(first_game = True):
             else:
                 print(f"RAW SCORE : {score}")
                 print(f"-50% for completing HARD MODE")
-                print(f"SCORE : {math.floor(score / 2)}")
+                score = {math.floor(score / 2)}
+                print(f"SCORE : {score}")
         else:
             print(f"SCORE : {score}")
 
+        if victory:
+            result = f"{color.GREEN}PASSED {g_num_guesses}/{num_guesses}{color.RESET}"
+        else:
+            result = f"{color.RED}FAILED {g_num_guesses}/{num_guesses}{color.RESET}"
+
+        scorecard.append([game_num, soln, score, result])
+
 if __name__ == '__main__':
-    main()
+
+    game_num = 0
+    main(game_num = 0)
     while(1):
         play_again = input(f"Would you like to play again? (Y/N):")
         clear()
         if play_again == 'Y' or play_again == 'y' or play_again == 'Yes' or play_again == 'yes':
-            main(first_game = False)
+            game_num = game_num + 1
+            main(game_num = game_num, first_game = False)
         elif play_again == 'N' or play_again == 'n' or play_again == 'No' or play_again == 'no':
 
             if fancy_printing:
                 beam_print(end_screen)
             else:
                 print(end_screen)
+
+            print("SUMMARY:\nGAME#\tSOLUTION\tSCORE\tRESULT")
+            for game, soln, score, result in scorecard:
+                print(f"{game}\t{soln}\t\t{score}\t{result}")
             exit()
         else:
             print("Sorry, that wasn't a valid input try again...")
