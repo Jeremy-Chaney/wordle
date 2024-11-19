@@ -646,7 +646,11 @@ def main(game_num, first_game = True):
 
         score = math.floor(g_num_guesses * (end_time - start_time) * 100)
 
-        if hard_mode:
+        # don't give a score for not completing the puzzle.
+        if not victory:
+            score = "N/A"
+
+        if hard_mode and victory:
             if fancy_printing:
                 beam_print(f"RAW SCORE : {score}\n-50% for completing HARD MODE\nSCORE : {math.floor(score / 2)}")
             else:
@@ -666,8 +670,8 @@ def main(game_num, first_game = True):
 
 if __name__ == '__main__':
 
-    game_num = 0
-    main(game_num = 0)
+    game_num = 1
+    main(game_num = game_num)
     while(1):
         play_again = input(f"Would you like to play again? (Y/N):")
         clear()
