@@ -670,6 +670,7 @@ def main(game_num, first_game = True):
 
 if __name__ == '__main__':
 
+    clear()
     game_num = 1
     main(game_num = game_num)
     while(1):
