@@ -758,14 +758,30 @@ if __name__ == '__main__':
                 print(end_screen)
 
             if h2h_flag:
+                p1_win_count = 0
+                p2_win_count = 0
                 print("SUMMARY:\nGAME#\tSOLN\tWINNER\tP1\tP2")
                 for game, soln, winner, p1_score, p2_score in scorecard:
                     if winner == "P1":
+                        p1_win_count = p1_win_count + 1
                         print(f"{game}.)\t{soln}\t{winner}\t{color.GREEN}{p1_score}{color.RESET}\t{p2_score}")
                     elif winner == "P2":
+                        p2_win_count = p2_win_count + 1
                         print(f"{game}.)\t{soln}\t{winner}\t{p1_score}\t{color.GREEN}{p2_score}{color.RESET}")
                     else:
                         print(f"{game}.)\t{soln}\t{winner}\t{p1_score}\t{p2_score}")
+
+                if p1_win_count > p2_win_count:
+                    result = "P1 Wins"
+                elif p2_win_count > p1_win_count:
+                    result = "P2 Wins"
+                else:
+                    result = "Tie"
+                print(f"\t\tTOTAL\t{p1_win_count}\t{p2_win_count}")
+                if fancy_printing:
+                    beam_print(f"{result}")
+                else:
+                    print(f"{result}!")
             else:
                 print("SUMMARY:\nGAME#\tSOLN\tSCORE\tRESULT")
                 for game, soln, score, result in scorecard:
