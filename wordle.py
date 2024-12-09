@@ -84,6 +84,7 @@ connection_port = 5555
 debug_word = 'debug'
 box_str = '\u2588 '
 guess_str = []
+h2h_flag = False
 
 keyboard_str = [
     'q w e r t y u i o p',
@@ -501,6 +502,7 @@ def main(game_num, first_game = True):
     global max_players
     global guess_str
     global num_guesses
+    global h2h_flag
     num_players = 1
     multiplayer_mode = False
 
@@ -519,6 +521,7 @@ def main(game_num, first_game = True):
     parser.add_argument("-p", "-max_players",   dest = "max_players",       type = int,             help="defines number of players (only used in host mode)",  default = 4)
     parser.add_argument("-j", "-join",          dest = "client_mode",       action = 'store_true',  help="launches wordle in multiplayer mode as client (solution will be overwritten by host)")
     parser.add_argument("-r", "-hard_mode",     dest = "hard_mode",         action = 'store_true',  help="launches wordle in hard mode")
+    parser.add_argument("-h2h", "-headtohead",  dest = "headtohead",        action = 'store_true',  help="launches wordle in head-to-head mode")
 
     # assign command line argument variables to their respective variables in the script
     args = parser.parse_args()
@@ -530,6 +533,7 @@ def main(game_num, first_game = True):
         max_players     = args.max_players
     client_mode         = args.client_mode
     hard_mode           = args.hard_mode
+    headtohead          = args.headtohead
 
     # takes the specified list below and prints them in alphabetical order, ready to copy into wordle_word_dict.py
     if alphabetize_mode:
@@ -641,32 +645,99 @@ def main(game_num, first_game = True):
                 soln = str(received_data)
                 client_socket.close()
 
+        if headtohead:
+            h2h_flag = True
+            pregame_message = """INFO :  Head To Head mode selected
+        Player 2, look away while Player 1 guesses
+        Player 1, press 'enter' when ready"""
+            print(pregame_message)
+            _ = input()
+
         start_time = time.time()
         g_num_guesses, end_time, victory = playing_fcn(soln, hard_mode)
 
-        score = math.floor(g_num_guesses * (end_time - start_time) * 100)
 
-        # don't give a score for not completing the puzzle.
-        if not victory:
-            score = "N/A"
+        if headtohead:
+
+            p1_score = math.floor(g_num_guesses * (end_time - start_time) * 100)
+            p1_victory = victory
+            if hard_mode and victory:
+                if fancy_printing:
+                    beam_print(f"RAW SCORE : {p1_score}\n-50% for completing HARD MODE\nSCORE : {math.floor(p1_score / 2)}")
+                else:
+                    print(f"RAW SCORE : {p1_score}\n-50% for completing HARD MODE\nSCORE : {math.floor(p1_score / 2)}")
+                p1_score = math.floor(p1_score / 2)
+            else:
+                print(f"SCORE : {p1_score}")
+                print(f"Player 1 Score : {p1_score}")
+            print("Player 1, press 'enter' when ready for Player 2 to try")
+            _ = input()
+            clear()
+            print("Player 2, press 'enter' when ready")
+            _ = input()
+
+            for i in range(num_guesses):
+                guess_str[i] = ''
+
+            for i in range(wordle_word_dict.num_letters):
+                wordle_word_dict.soln_num_letter_per_word[i] = 0
+                wordle_word_dict.guess_num_letter_per_word[i] = 0
+                wordle_word_dict.guess_num_letter_green_per_word[i] = 0
+                wordle_word_dict.guess_num_letter_per_word_printed[i] = 0
+                wordle_word_dict.keyboard_status[i] = 0
+
+            start_time = time.time()
+            g_num_guesses, end_time, p2_victory = playing_fcn(soln, hard_mode)
+
+        score = math.floor(g_num_guesses * (end_time - start_time) * 100)
 
         if hard_mode and victory:
             if fancy_printing:
                 beam_print(f"RAW SCORE : {score}\n-50% for completing HARD MODE\nSCORE : {math.floor(score / 2)}")
             else:
-                print(f"RAW SCORE : {score}")
-                print(f"-50% for completing HARD MODE")
-                score = {math.floor(score / 2)}
-                print(f"SCORE : {score}")
+                print(f"RAW SCORE : {score}\n-50% for completing HARD MODE\nSCORE : {math.floor(score / 2)}")
+            score = math.floor(score / 2)
         else:
             print(f"SCORE : {score}")
 
-        if victory:
-            result = f"{color.GREEN}PASSED {g_num_guesses}/{num_guesses}{color.RESET}"
+        if headtohead:
+            p2_score = score
+            if not p1_victory:
+                p1_score = -1
+            if not p2_victory:
+                p2_score = -1
+            if(p1_victory and (p1_score < score)) or (p1_victory and not p2_victory):
+                print(f"PLAYER 1 WINS!")
+                winner = "P1"
+                score = p1_score
+            elif(p2_victory):
+                print(f"PLAYER 2 WINS!")
+                winner = "P2"
+                score = p1_score
+            else:
+                print("You both suck!")
+                winner = "N/A"
         else:
-            result = f"{color.RED}FAILED {g_num_guesses}/{num_guesses}{color.RESET}"
+            # don't give a score for not completing the puzzle.
+            if not victory:
+                score = "N/A"
 
-        scorecard.append([game_num, soln, score, result])
+        if not headtohead:
+            if victory:
+                result = f"{color.GREEN}PASSED {g_num_guesses}/{num_guesses}{color.RESET}"
+            else:
+                result = f"{color.RED}FAILED {g_num_guesses}/{num_guesses}{color.RESET}"
+
+        if headtohead:
+            if p1_score == -1:
+                p1_score = "FAIL"
+            if p2_score == -1:
+                p2_score = "FAIL"
+            print(f"Player 1 Score : {p1_score}")
+            print(f"Player 2 Score : {p2_score}")
+            scorecard.append([game_num, soln, winner, p1_score, p2_score])
+        else:
+            scorecard.append([game_num, soln, score, result])
 
 if __name__ == '__main__':
 
@@ -686,9 +757,19 @@ if __name__ == '__main__':
             else:
                 print(end_screen)
 
-            print("SUMMARY:\nGAME#\tSOLUTION\tSCORE\tRESULT")
-            for game, soln, score, result in scorecard:
-                print(f"{game}\t{soln}\t\t{score}\t{result}")
+            if h2h_flag:
+                print("SUMMARY:\nGAME#\tSOLN\tWINNER\tP1\tP2")
+                for game, soln, winner, p1_score, p2_score in scorecard:
+                    if winner == "P1":
+                        print(f"{game}.)\t{soln}\t{winner}\t{color.GREEN}{p1_score}{color.RESET}\t{p2_score}")
+                    elif winner == "P2":
+                        print(f"{game}.)\t{soln}\t{winner}\t{p1_score}\t{color.GREEN}{p2_score}{color.RESET}")
+                    else:
+                        print(f"{game}.)\t{soln}\t{winner}\t{p1_score}\t{p2_score}")
+            else:
+                print("SUMMARY:\nGAME#\tSOLN\tSCORE\tRESULT")
+                for game, soln, score, result in scorecard:
+                    print(f"{game}.)\t{soln}\t{score}\t{result}")
             exit()
         else:
             print("Sorry, that wasn't a valid input try again...")
