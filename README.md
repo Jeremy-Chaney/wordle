@@ -15,8 +15,10 @@ If you want to make a version of this for yourself, I recommend using the word d
     2. a correct letter in the wrong spot will appear yellow
     3. a letter that does not appear in the final word will appear grey
     4. if a guess contains multiple of a given letter, only the amount that actually exists in the final word will be shaded yellow/green
-    5. (hard mode only) if a guess eliminates a letter, no future guess can contain that letter
-    6. (hard mode only) if a guess indicates a letter exists in the solution, every future guess must contain that letter
+
+Hard-Mode Only:
+- if a guess eliminates a letter, no future guess can contain that letter
+- if a guess indicates a letter exists in the solution, every future guess must contain that letter
 
 # Modifications to the Rules
 In the interest of creating a game that can be played competatively, a score is assigned based on the # of guesses needed to solve as well as the amount of time spent guessing:
